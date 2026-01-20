@@ -1,0 +1,185 @@
+---
+title: "Analyse des facteurs influençant le prix des maison"
+author: "Victor ATTOH-AHOIN & Rock KOMLAN & EFIA Donné"
+date: "`r Sys.Date()`"
+output: html_document
+html_document:
+    theme: flatly        
+    highlight: tango     
+    toc: true           
+    toc_float: true      
+    code_folding: hide   
+---
+
+##Introduction au Projet
+#Dans le cadre de cette étude, nous nous intéressons aux dynamiques du marché immobilier à travers le célèbre jeu de données "Ames Housing". L'objectif principal est de déterminer et de quantifier les facteurs qui influencent de manière significative le prix de vente final des propriétés.
+
+#Le marché de l'immobilier est complexe et dépend d'une multitude de caractéristiques, qu'elles soient structurelles (surface, nombre de chambres), qualitatives (état général) ou temporelles (année de construction). Pour répondre à cette problématique, notre démarche suivra une rigueur scientifique articulée autour de quatre axes majeurs :
+
+#Préparation et Audit : Identification des variables clés et vérification de l'intégrité des données (valeurs manquantes).
+
+#Nettoyage et Ingénierie des données : Traitement des doublons et création de nouvelles variables plus parlantes, telles que l'âge du bâtiment ou la surface totale utilisable.
+
+#Exploration Statistique : Visualisation des distributions et des corrélations pour valider nos premières hypothèses.
+
+#Modélisation : Utilisation de la régression linéaire multiple pour modéliser l'impact combiné des facteurs sur le prix de vente.
+
+#Cette analyse nous permettra non seulement de comprendre ce qui crée de la valeur dans un bien immobilier, mais aussi de proposer un modèle prédictif basé sur des indicateurs concrets et vérifiables.
+#ETAPE1: IMPORTATION ET PREPARATION
+
+#1.Chargement de bibliothèques
+
+library(tidyverse)
+
+library(knitr)
+
+library(ggplot2)
+
+
+
+#2. Importation du dataset
+
+data<- read.csv("train.csv")
+
+head(data)
+
+dim(data)
+
+
+
+
+
+
+
+##ETAPE2: NETTOYAGE ET NOUVELLES VARIABLES
+
+##C'est la partie la plus importante. Nous allons filtrer, auditer, nettoyer et transformer.
+
+#A.Selection et Première sauvegarde(Nous isolons les variables nééssaires à l'étude.)
+
+
+
+data_subset <- data[, c("SalePrice", "GrLivArea", "TotalBsmtSF", "BedroomAbvGr","OverallQual","YearBuilt","YrSold")]
+
+
+
+
+
+#B.Audit des valeurs Manquantes
+
+#Calcul du nombre et du pourcentage de NA
+
+tableau_na <- data.frame(
+
+Variable = names(data_subset),
+
+Nb_Manquants = colSums(is.na(data_subset)),
+
+Pourcentage= round((colSums(is.na(data_subset)) / nrow(data_subset)) * 100, 2)
+
+)
+
+kable(tableau_na, caption="Audit des données manquantes")
+
+
+
+#C.Nettoyage(Doublons et suppression )
+
+#1. Suppression des doublons 
+
+data_no_dup <-data_subset %>% distinct()
+
+
+
+#2.Suppression des lignes avec des valeurs manquantes
+
+data_clean <- drop_na(data_no_dup)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##ETAPE 3: STATISTIQUES DESCRIPTIVES COMPLETES
+
+#Résumé complet des variables (Moyenne, Médiane, Quartiles) 
+
+summary(data_final)
+
+
+
+##Visualisation de la distribution des prix 
+
+options(scipen = 999)
+
+
+
+ggplot(data_final, aes(x= SalePrice)) +
+
+geom_histogram(fill = "#2c3e50", color= "white", bins = 40)+
+
+labs(title = "Réparatition des prix de vente", x= "Prix ($)", y= "Nombre de maisons") +
+
+theme_minimal()
+
+##Analyse des Relations(vairables cible)
+
+##1. Graphique Simple : Prix vs Surface Totale
+
+# Ce graphique montre si la taille globale (maison + sous-sol) influence le prix
+
+plot(data_final$Surface_Totale, data_final$SalePrice, 
+
+     main = "Influence de la Surface Totale sur le Prix",
+
+     xlab = "Surface Totale (sqft)", 
+
+     ylab = "Prix de Vente ($)",
+
+     pch = 19, col = "steelblue")
+
+# 2. Graphique Simple : Prix vs Âge de la maison
+
+# Ce graphique montre si les maisons plus récentes se vendent plus cher
+
+plot(data_final$Age_Maison, data_final$SalePrice, 
+
+     main = "Influence de l'Âge sur le Prix",
+
+     xlab = "Âge de la maison (années)", 
+
+     ylab = "Prix de Vente ($)",
+
+     pch = 19, col = "darkgreen")
+
+
+
+#ETAPE 4: MODELE SIMPLE 
+
+##Modèle combiné(Surface Totale -> Prix & Âge de la maison -> prix )
+
+model_multiple <- lm(SalePrice ~ Surface_Totale + Age_Maison, data = data_final)
+
+summary(model_multiple)
+
+##CONCLUSION GENERALE
+##Cette étude nous a permis d'analyser les facteurs clés du marché immobilier d'Ames. Grâce au processus de nettoyage, nous avons travaillé sur un jeu de données fiable de 1460 observations.
+##Les points essentiels à retenir sont :
+
+##La Surface est reine : La création de la variable Surface_Totale (habitable + sous-sol) s'avère être l'indicateur le plus précis pour prédire le prix.
+
+##L'impact du temps : L'ancienneté déprécie la valeur des biens, soulignant l'importance de la date de construction dans l'investissement immobilier.
+
+##Fiabilité du modèle : Notre modèle statistique permet d'expliquer une part importante de la variation des prix, offrant ainsi une base solide pour des estimations futures.
+
+##En conclusion, pour maximiser la valeur d'un bien, il faut privilégier l'espace total utilisable tout en tenant compte de l'obsolescence liée à l'âge du bâtiment.
